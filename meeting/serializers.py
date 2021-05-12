@@ -8,8 +8,7 @@ from user.models import User
 from user.serializers import UserSerializer
 
 
-# class EventSerializer(serializers.HyperlinkedModelSerializer):
-class EventSerializer(serializers.ModelSerializer):
+class EventSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Event
         exclude = ['participants']
@@ -20,8 +19,8 @@ class EventSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         valid = super().validate(attrs)
-        if ((valid['start'] + timedelta(hours=8)) < valid['end']
-                or valid['start'] >= valid['end']):
+        start, end = valid['start'], valid['end']
+        if (start + timedelta(hours=8)) < end or start >= end:
             raise serializers.ValidationError("Event time must be positive and lower than 8h")
         return valid
 
@@ -35,7 +34,6 @@ class EventSerializer(serializers.ModelSerializer):
     #     return result
 
     def build_nested_field(self, field_name, relation_info, nested_depth):
-        for i in range(10): print('nested')
         default_field_class, field_kwargs = \
             super().build_nested_field(field_name, relation_info, nested_depth)
 
@@ -43,12 +41,18 @@ class EventSerializer(serializers.ModelSerializer):
         #   hardcoded values are never good option, but there shouldn't be any crashes
         #   further testing required
         #   clean up
-        if relation_info.related_model is Room:
-            field_class = RoomSerializer
-        elif relation_info.related_model is User:
-            field_class = UserSerializer
-        else:
-            field_class = default_field_class
+        print(relation_info.related_model)
+        field_class = {
+            Room: RoomSerializer,
+            User: UserSerializer,
+        }.get(relation_info.related_model, default_field_class)
+
+        # if relation_info.related_model is Room:
+        #     field_class = RoomSerializer
+        # elif relation_info.related_model is User:
+        #     field_class = UserSerializer
+        # else:
+        #     field_class = default_field_class
 
         return field_class, field_kwargs
 

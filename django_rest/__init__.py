@@ -9,6 +9,7 @@
 #   5. meeting owner - done
 #   6. meeting time - done?
 #   7. event visibility
+#   8. tests
 #
 
 

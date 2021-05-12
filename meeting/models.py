@@ -20,21 +20,18 @@ class Event(models.Model):
         max_length=settings.MAX_LENGTH
     )
 
-    agenda = models.TextField(
-    )
+    agenda = models.TextField()
 
-    start = models.DateTimeField(
-    )
+    start = models.DateTimeField()
 
-    end = models.DateTimeField(
-    )
+    end = models.DateTimeField()
 
     participants = models.ManyToManyField(
         to=User,
         related_name='participated_event_set',
     )
 
-    location = models.OneToOneField(
+    location = models.ForeignKey(
         to=Room,
         blank=True,
         null=True,
