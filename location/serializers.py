@@ -1,14 +1,20 @@
 from rest_framework import serializers
+from rest_framework.serializers import SerializerMetaclass
 
+from django_rest.serializers import MyModelSerializerMetaclass, MyModelSerializer
 from location.models import Room
 
 
-class RoomSerializer(serializers.HyperlinkedModelSerializer):
+
+
+class RoomSerializer(
+    MyModelSerializer
+    # serializers.ModelSerializer,
+    # metaclass=MyModelSerializerMetaclass
+):
     class Meta:
         model = Room
-        # fields = '__all__'
-        exclude = ['manager']
+        fields = '__all__'
 
-    # manager = serializers.HiddenField(
-    #     default=serializers.CurrentUserDefault()
-    # )
+    # url = None
+

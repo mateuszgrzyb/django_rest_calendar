@@ -6,8 +6,8 @@ from meeting.urls import routes as meeting_routes
 from location.urls import routes as location_routes
 
 router = DefaultRouter()
-for (route, view) in meeting_routes + location_routes:
-    router.register(route, view)
+for router_data in meeting_routes + location_routes:
+    router.register(*router_data)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
