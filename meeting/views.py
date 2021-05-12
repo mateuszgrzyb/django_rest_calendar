@@ -1,6 +1,7 @@
 import datetime
 import re
 import pytz
+from django.db.models import Q
 
 from rest_framework import viewsets
 
@@ -10,22 +11,35 @@ from meeting.serializers import EventSerializer, NestedEventSerializer
 from meeting.exceptions import QueryParamError
 
 
-def filter_events_by_day(queryset, day, tz):
+def day_selector(day, tz):
+    print('day')
     day_regex = re.compile(r"\d{4}-\d{2}-\d{2}")
-    #day_regex = re.compile(r"\d{4}-[1-9]|1[0-2]-[1-9]|[1-2][0-9]|30|31")
 
     if day_regex.fullmatch(day) is None:
         raise QueryParamError()
 
-    day = datetime.date(*map(int, day.split('-')))
+    try:
+        day = datetime.date(*map(int, day.split('-')))
+    except ValueError as ve:
+        raise QueryParamError() from ve
 
     day_start = datetime.datetime.combine(day, datetime.time.min, tzinfo=tz)
     day_end = datetime.datetime.combine(day, datetime.time.max, tzinfo=tz)
-    return queryset.filter(start__range=(day_start, day_end))
+    return Q(start__range=(day_start, day_end))
 
 
-def filter_events_by_location(queryset, location_id):
-    return queryset.filter(location_id=location_id)
+def location_selector(location_id):
+    print('location')
+    return Q(location_id=location_id)
+
+
+def query_selector(query):
+    print('query')
+    return Q(name__contains=query) | Q(agenda__contains=query)
+
+
+def q_or_fun(fun, val, *args):
+    return Q() if val is None else fun(*((val,) + args))
 
 
 class EventViewSet(viewsets.ModelViewSet):
@@ -37,29 +51,16 @@ class EventViewSet(viewsets.ModelViewSet):
         else:
             return EventSerializer
 
-    # TODO:
-    #   CLEAN UP
     def get_queryset(self):
         self.nested = False
-
-        # change it - get it from user model
-        tz = pytz.UTC
-
+        tz = pytz.timezone(self.request.user.timezone)
         query_dict = self.request.query_params
-        query_keys = query_dict.keys()
-
-        # print({k: query_dict[k] for k in query_keys})
 
         if query_dict.get('nested') is not None:
             self.nested = True
 
-        queryset = Event.objects.all()
-
-        if (day := query_dict.get('day')) is not None:
-            queryset = filter_events_by_day(queryset, day, tz)
-
-        if (location_id := query_dict.get('location_id')) is not None:
-            queryset = filter_events_by_location(queryset, location_id)
-
-        return queryset
-
+        return Event.objects.filter(
+            q_or_fun(day_selector, query_dict.get('date'), tz) &
+            q_or_fun(location_selector, query_dict.get('location_id')) &
+            q_or_fun(query_selector, query_dict.get('query'))
+        )

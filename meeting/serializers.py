@@ -2,18 +2,11 @@ from datetime import timedelta
 
 from rest_framework import serializers
 
+from django_rest.serializers import MyModelSerializer
 from meeting.models import Event
-from django_rest.serializers import MyModelSerializerMetaclass, MyModelSerializer
 
 
-class EventSerializer(
-    MyModelSerializer,
-    # serializers.ModelSerializer,
-    # metaclass=MyModelSerializerMetaclass,
-):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
+class EventSerializer(MyModelSerializer):
     class Meta:
         model = Event
         exclude = ['participants']
@@ -21,7 +14,6 @@ class EventSerializer(
     owner = serializers.HiddenField(
         default=serializers.CurrentUserDefault()
     )
-
 
     def validate(self, attrs):
         valid = super().validate(attrs)
@@ -34,4 +26,3 @@ class EventSerializer(
 class NestedEventSerializer(EventSerializer):
     class Meta(EventSerializer.Meta):
         depth = 1
-

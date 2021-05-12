@@ -1,12 +1,8 @@
-from datetime import datetime, timedelta
-
 from django.db import models
-from django.db.models import F, Q
-from django.utils import timezone
 
 from django_rest import settings
-from user.models import User
 from location.models import Room
+from user.models import User
 
 
 class Event(models.Model):
