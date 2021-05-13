@@ -34,14 +34,15 @@ class Event(models.Model):
         on_delete=models.CASCADE,
     )
 
-    # alternative solution to serializer validation
-    # class Meta:
-    #     constraints = [
-    #         models.CheckConstraint(
-    #             name="Event's 8h time limit",
-    #             check=Q(end__lt=(F('start')+timedelta(hours=8))) & Q(end__gt=F('start'))
-    #         )
-    #     ]
+    # TODO:
+    #   alternative solution to serializer validation
+    #   class Meta:
+    #       constraints = [
+    #           models.CheckConstraint(
+    #               name="Event's 8h time limit",
+    #               check=Q(end__lt=(F('start')+timedelta(hours=8))) & Q(end__gt=F('start'))
+    #           )
+    #       ]
 
     def __str__(self):
         return self.name

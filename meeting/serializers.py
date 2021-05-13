@@ -1,15 +1,46 @@
 from datetime import timedelta
 
+import pytz
 from rest_framework import serializers
+from rest_framework.settings import api_settings
 
 from django_rest.serializers import MyModelSerializer
 from meeting.models import Event
 
 
-class EventSerializer(MyModelSerializer):
+class TimezoneAwareDateTimeField(serializers.DateTimeField):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def to_representation(self, value):
+        tz = self.context['request'].user.timezone
+        value = value.replace(tzinfo=pytz.timezone(tz))
+        return super().to_representation(value)
+
+
+class EventSerializer(
+    # serializers.HyperlinkedModelSerializer
+    MyModelSerializer
+):
     class Meta:
         model = Event
-        exclude = ['participants']
+        # exclude = ['participants']
+        fields = [
+            'url',
+            'owner',
+            'name',
+            'agenda',
+            'start',
+            'end',
+            'location',
+        ]
+
+    start = TimezoneAwareDateTimeField(
+    )
+
+    end = TimezoneAwareDateTimeField(
+    )
 
     owner = serializers.HiddenField(
         default=serializers.CurrentUserDefault()

@@ -3,6 +3,8 @@ from django.contrib.auth.models import AbstractUser
 from pytz import all_timezones
 from django.utils.translation import gettext_lazy as _
 
+from django_rest.misc import all_subclasses
+
 MAX_TZ_LENGTH = max(len(tz) for tz in all_timezones)
 
 
@@ -42,19 +44,25 @@ class User(AbstractUser):
     class RoleError(Exception):
         pass
 
-    roles = {cls.__name__: cls for cls in Role.__subclasses__()}
+    roles = {cls.__name__: cls for cls in all_subclasses(Role)}
     role_names = [(n, _(n)) for n in roles.keys()]
 
     role_name = models.CharField(
         max_length=20,
-        choices=role_names
+        choices=role_names,
     )
 
-    def get_role(self, role):
+    def get_role(self, role_name):
         try:
-            return self.roles[role].objects.get(profile=self)
+            return self.roles[role_name].objects.get(profile=self)
         except KeyError as ke:
-            raise User.RoleError(f'{role} does not exist') from ke
+            raise User.RoleError(f'{role_name} does not exist') from ke
+
+        # TODO:
+        #   try:
+        #       return getattr(self, role_name)
+        #   except AttributeError as ae
+        #       raise User.RoleError(f'{role_name} does not exist') from ae
 
     company_id = models.UUIDField(
     )
@@ -65,38 +73,3 @@ class User(AbstractUser):
         null=False,
         blank=False,
     )
-
-# class Manager(models.Model):
-#     profile = models.OneToOneField(
-#         to=User,
-#         on_delete=models.CASCADE,
-#         null=True,
-#         default=None,
-#     )
-#
-#     def __str__(self):
-#         return self.profile.username
-#
-#
-# class Owner(models.Model):
-#     profile = models.OneToOneField(
-#         to=User,
-#         on_delete=models.CASCADE,
-#         null=True,
-#         default=None,
-#     )
-#
-#     def __str__(self):
-#         return self.profile.username
-#
-#
-# class Participant(models.Model):
-#     profile = models.OneToOneField(
-#         to=User,
-#         on_delete=models.CASCADE,
-#         null=True,
-#         default=None,
-#     )
-#
-#     def __str__(self):
-#         return self.profile.username
