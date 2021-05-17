@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.db.models.signals import post_init, post_save
+from django.dispatch import receiver
 from pytz import all_timezones
 from django.utils.translation import gettext_lazy as _
 
@@ -14,13 +16,13 @@ class Role(models.Model):
     class Meta:
         abstract = True
 
-    profile = models.OneToOneField(
+    user = models.OneToOneField(
         to='User',
         on_delete=models.CASCADE,
     )
 
     def __str__(self):
-        return self.profile.username
+        return self.user.username
 
 
 class Manager(Role):
@@ -73,3 +75,10 @@ class User(AbstractUser):
         null=False,
         blank=False,
     )
+
+
+@receiver(post_save, sender=User)
+def initialize_role(sender, instance, created, **kwargs):
+    if created:
+        role_class = User.roles[instance.role_name]
+        role_class.objects.create(user=instance)

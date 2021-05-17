@@ -1,9 +1,13 @@
 from location.models import Room
 
-from django_rest.serializers import MyModelSerializer
+from django_rest.serializers import NestingModelSerializer
 
 
-class RoomSerializer(MyModelSerializer):
+class RoomSerializer(NestingModelSerializer):
     class Meta:
         model = Room
-        # fields = '__all__'
+        fields = [
+            'manager',
+            'name',
+            'address'
+        ]

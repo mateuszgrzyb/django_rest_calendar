@@ -2,30 +2,40 @@ from datetime import timedelta
 
 import pytz
 from rest_framework import serializers
-from rest_framework.settings import api_settings
 
-from django_rest.serializers import MyModelSerializer
+from django_rest.serializers import NestingModelSerializer
 from meeting.models import Event
 
 
 class TimezoneAwareDateTimeField(serializers.DateTimeField):
-
+    # TODO:
+    #   save datetime in UTC timezone??
     def __init__(self, *args, **kwargs):
+        format_ = '%Y-%m-%d %H:%M:%S'
+        kwargs |= {
+            'format': format_,
+            'input_formats': [format_, 'iso-8601'],
+        }
         super().__init__(*args, **kwargs)
 
+    def get_timezone(self):
+        tz_str = self.context['request'].user.timezone
+        return pytz.timezone(tz_str)
+
     def to_representation(self, value):
-        tz = self.context['request'].user.timezone
-        value = value.replace(tzinfo=pytz.timezone(tz))
+        tz = self.get_timezone()
+        value = value.astimezone(tz)
         return super().to_representation(value)
 
+    def to_internal_value(self, value):
+        tz = self.get_timezone()
+        internal_value = super().to_internal_value(value)
+        return internal_value.replace(tzinfo=tz)
 
-class EventSerializer(
-    # serializers.HyperlinkedModelSerializer
-    MyModelSerializer
-):
+
+class EventSerializer(NestingModelSerializer):
     class Meta:
         model = Event
-        # exclude = ['participants']
         fields = [
             'url',
             'owner',
@@ -34,6 +44,7 @@ class EventSerializer(
             'start',
             'end',
             'location',
+            'participants',
         ]
 
     start = TimezoneAwareDateTimeField(

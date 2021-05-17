@@ -17,7 +17,7 @@ class MyModelSerializerMetaclass(serializers.SerializerMetaclass):
         return super().__new__(mcs, name, bases, attrs)
 
 
-class MyModelSerializer(
+class NestingModelSerializer(
     serializers.HyperlinkedModelSerializer,
     # FIXME: metaclass=MyModelSerializerMetaclass
 ):
@@ -54,10 +54,7 @@ class MyModelSerializer(
         _, kwargs = \
             super().build_nested_field(field_name, relation_info, nested_depth)
 
-        class DefaultSerializer(
-            self.get_default_nested_serialier()
-            # serializers.ModelSerializer
-        ):
+        class DefaultSerializer(self.get_default_nested_serialier()):
             class Meta:
                 model = relation_info.related_model
                 fields = '__all__'
@@ -78,7 +75,5 @@ class MyModelSerializer(
         #      so it can be garbage collected
         #   import gc
         #   gc.collect()
-
-        # print(f'no of MMS subclasses: {len(all_subclasses(MyModelSerializer))}')
 
         return InnerSerializer, kwargs
