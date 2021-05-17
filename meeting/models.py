@@ -25,6 +25,7 @@ class Event(models.Model):
     participants = models.ManyToManyField(
         to=User,
         related_name='participated_event_set',
+        blank=True,
     )
 
     location = models.ForeignKey(
